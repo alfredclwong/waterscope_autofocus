@@ -1,0 +1,20 @@
++++ readlink -f /home/pi/RPi_Cam_Web_Interface/stop.sh
+++ dirname /home/pi/RPi_Cam_Web_Interface/stop.sh
++ cd /home/pi/RPi_Cam_Web_Interface
++ source ./config.txt
+++ rpicamdir=html
+++ webserver=apache
+++ webport=80
+++ user=
+++ webpasswd=
+++ autostart=yes
+++ DEBUG=no
+++ RPICAMDIR=
+++ AUTOSTART=
+++ security=no
+++ user=
+++ passwd=
++ fn_stop
++ sudo killall raspimjpeg
++ sudo killall php
++ sudo killall motion
