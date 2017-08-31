@@ -1,0 +1,91 @@
+"""vid2fov.py
+
+Read a video file of a sweep through autofocus servo's full RoM and analyse
+the focus curve for each pixel over time.
+
+If the curve's shape peaks well, include the pixel in FoV. If the shape is
+random, exclude.
+"""
+
+import sys
+#import argparse
+import time
+import math
+
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+import scipy.ndimage as sn
+
+"""
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--images", required=True, help="path to input directory
+        of images")
+ap.add_arguemnt("-t". "--threshold", type=float, default=100.0,
+        help="focus measures that fall below this value will be considered
+        blurry")
+args = vars(ap.parse_args())
+#"""
+
+def plot(image, data, xscale, yscale, color):
+    for x in range(len(data)-1):
+        cv2.line(image, (int(x*xscale), int(data[x]*yscale)), (int((x+1)*xscale), int(data[x+1]*yscale)), color)
+
+vid = cv2.VideoCapture(sys.argv[1])
+#vid.set(cv2.CAP_PROP_FOURCC, )
+width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+frames = 0
+while True:
+    flag, frame = vid.read()
+    if not flag:
+        #vid.set(cv2.CAP_PROP_POS_MSEC, 0)
+        vid = cv2.VideoCapture(sys.argv[1])
+        break
+    frames += 1
+
+gridsize = 64
+gridx = math.floor(width/gridsize)
+gridy = math.floor(height/gridsize)
+grids = np.empty((gridy, gridx, frames), dtype=np.float)
+
+plots = 4
+colors = [
+        (255,255,255),
+        (0,255,0),
+        (0,0,255),
+        (0,255,255)]
+
+for i in range(4):
+    flag, frame = vid.read()
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    lap = cv2.Laplacian(gray, cv2.CV_64F)
+
+    for y in range(gridy):
+        for x in range(gridx):
+            grids[y, x, i] = lap[y*gridsize:(y+1)*gridsize, x*gridsize:(x+1)*gridsize].var()
+    
+    for j in range(plots):
+        if i == 0:
+            continue
+        else:
+            """a = grids[int(j*gridy/plots),int(j*gridx/plots),:]
+            a -= np.min(a)
+            a /= np.max(a)
+            a = 1-a
+            plot(frame, a, width/frames, height, colors[j])
+"""
+    cv2.imshow('frame', frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+print(grids)
+
+#time.sleep(2)
+
+#print(np.amin(grids))
+#print(np.amin(grids, 0))
+
+vid.release()
+cv2.destroyAllWindows()
